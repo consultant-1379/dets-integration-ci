@@ -1,0 +1,61 @@
+eric-cloud-native-base:
+  eric-data-search-engine:
+    resources:
+      data:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+      ingest:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+      master:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+  eric-log-transformer:
+    resources:
+      logtransformer:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+  eric-pm-server:
+    resources:
+      eric-pm-server:
+        requests:
+          memory: 1Mi
+
+eric-cncs-oss-config:
+  eric-data-search-engine:
+    resources:
+      data:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+      ingest:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+      master:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+  eric-log-transformer:
+    resources:
+      logtransformer:
+        requests:
+          cpu: 1m
+          memory: 1Mi
+  eric-pm-server:
+    resources:
+      eric-pm-server:
+        requests:
+          memory: 1Mi
+eric-oss-dmm:
+  eric-oss-dmm-kf-op-sz:
+    kafka-cluster:
+      kafka:
+        resources:
+          requests:
+            memory: 1Mi
+            cpu: 1m

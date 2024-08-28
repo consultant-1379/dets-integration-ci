@@ -1,0 +1,1 @@
+openssl req -new -newkey rsa:2048 -nodes -out sts-oss-support.cba.clm.local.csr -keyout sts-oss-support.cba.clm.local.key -subj "/C=SE/ST=Stockholm/L=Stockholm/O=Ericsson AB/OU=IT/CN=sts-oss-support.cba.clm.local" -addext "keyUsage = digitalSignature"  -addext "extendedKeyUsage = clientAuth"

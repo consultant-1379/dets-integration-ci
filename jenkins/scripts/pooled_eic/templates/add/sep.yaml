@@ -1,0 +1,8 @@
+# please remember to substitute the placeholder NAMESPACE with the name
+# of the namespace you are using.
+global:
+  storageEncryption:
+    enabled: true
+    storageClassName: "enc-sc-NAMESPACE"
+    backingStorageClass: "network-block"
+

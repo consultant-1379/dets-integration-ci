@@ -1,0 +1,3 @@
+eric-cloud-native-base:
+  eric-odca-diagnostic-data-collector:
+    sftpServerHost: "sftp-server:22"

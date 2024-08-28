@@ -1,0 +1,18 @@
+{
+    "name": "stsossflexcenm1001",
+    "vendor": "Ericsson",
+    "url": "https://stsossflexcenm1001-11008.stsoss.sero.gic.ericsson.se",
+    "adapterLink": "eric-eo-enm-adapter",
+    "subsystemType": {
+        "type": "DomainManager"
+    },
+    "connectionProperties": [
+    {
+        "name": "ENM",
+        "username": "administrator",
+        "password": "ENM_PASSWORD",
+        "scriptingVMs": "10.65.9.90",
+        "sftpPort": "22"
+    }
+    ]
+}

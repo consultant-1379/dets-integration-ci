@@ -1,0 +1,88 @@
+global:
+  security:
+    tls:
+      enabled: true
+  hosts:
+    iam: iam.hall144-eiap.ews.gic.ericsson.se
+    gas: gas.hall144-eiap.ews.gic.ericsson.se
+    adc: adc.hall144-eiap.ews.gic.ericsson.se
+  registry:
+    url: DOCKER_REGISTRY_REPLACE
+    username: USERNAME_REPLACE
+    password: 'PASSWORD_REPLACE'
+  support:
+    ipv6:
+      enabled: false
+  timezone: UTC
+  createClusterRoles: true
+tags:
+  so: false
+  pf: false
+  uds: false
+  adc: true
+  dmm: true
+  th: false
+  eas: false
+  ch: false
+  appmgr: false
+  ta: false
+  os: false
+  pmh: false
+  ml: false
+eric-cloud-native-base:
+  eric-data-search-engine-curator:
+    cronjob:
+      curator:
+        schedule: 0 */2 * * *
+    actions: ''
+  eric-sec-access-mgmt:
+    replicaCount: 2
+  eric-ctrl-bro:
+    persistence:
+      persistentVolumeClaim:
+        size: 15Gi
+    sftp:
+      username: dummy
+      password: dummy
+  eric-log-transformer:
+    egress:
+      syslog:
+        enabled: false
+        remoteHosts: []
+  eric-data-search-engine:
+    service:
+      network:
+        protocol:
+          IPv6: false
+    persistence:
+      data:
+        persistentVolumeClaim:
+          size: 10Gi
+  eric-data-object-storage-mn:
+    brAgent:
+      properties:
+        backup_data_path: bucket1/data1.txt
+  eric-fh-snmp-alarm-provider:
+    sendAlarm: false
+eric-oss-common-base:
+  sessionTokens:
+    maxSessionDurationSecs: 36000
+    maxIdleTimeSecs: 1800
+  service-mesh-ingress-gateway:
+    service:
+      loadBalancerIP: 10.156.77.157
+      annotations:
+        cloudProviderLB: {}
+    externalTrafficPolicy: Cluster
+  system-user:
+    credentials:
+      username: system-user
+      password: Ericsson123!
+  gas:
+    defaultUser:
+      username: gas-user
+      password: Ericsson123!
+  eric-eo-usermgmt:
+    replicaCount: 2
+  eric-eo-usermgmt-ui:
+    replicaCount: 2

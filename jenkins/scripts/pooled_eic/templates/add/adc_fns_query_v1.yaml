@@ -1,0 +1,52 @@
+eric-oss-adc:
+  eric-oss-enm-fns:
+    configuredQueries: |-
+      enms:
+        - name: ENM_NAME_REPLACE
+          periodSeconds: 60
+          queries:
+            - name: query1
+              topic: sftp-filetrans
+              dmmDataTypeRegistrationParameters:
+                dataSpace: "4G5G"
+                dataCategory: PM_COUNTERS
+              enmFileLookupServiceParameters:
+                dataType: PM_STATISTICAL
+                nodeType: "RadioNode"
+                id: -1
+              fileType: "xml.gz"
+        - name: restsimpm
+          periodSeconds: 60
+          queries:
+            - name: query2
+              topic: sftp-filetrans
+              dmmDataTypeRegistrationParameters:
+                dataSpace: "4G5G"
+                dataCategory: PM_COUNTERS
+              enmFileLookupServiceParameters:
+                dataType: PM_STATISTICAL
+                nodeType: "RadioNode"
+                id: -1
+              fileType: "xml.gz"
+            - name: query3
+              topic: 4g-event
+              fileType: ""
+              fileLocation: ".*_1\\.bin(?:\\.gz)?$"
+              dmmDataTypeRegistrationParameters:
+                dataSpace: "4G"
+                dataCategory: "PM_EVENTS"
+              enmFileLookupServiceParameters:
+                dataType: PM_CELLTRACE
+                nodeType: "RadioNode"
+                id: -1
+    dmm:
+      dataCatalog:
+        messageBusName: eric-oss-dmm-kf-op-sz-kafka-bootstrap
+        messageBusNamespace: eric-eic
+    ignoreSubscription: false
+    secureConnection:
+      serverCertificates:
+        secretNames:
+          - enm-cacert-secret
+          - test-enm-cert
+          - stub-cert

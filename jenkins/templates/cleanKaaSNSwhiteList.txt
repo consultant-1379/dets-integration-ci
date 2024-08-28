@@ -1,0 +1,14 @@
+bookings
+cattle-fleet-system
+cattle-impersonation-system
+cattle-system
+cis-operator-system
+eric-crd-ns
+gatekeeper-system
+default
+dets-monitoring
+ingress-nginx
+kube-node-lease
+kube-public
+kube-system
+local

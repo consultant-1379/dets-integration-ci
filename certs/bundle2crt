@@ -1,0 +1,5 @@
+#!/bin/bash
+INPUT="$1"
+[ -z "$INPUT" ] && echo "need input file" && exit 1
+OUTPUT="${INPUT%.bundle}.crt"
+sed '1,/-----END CERTIFICATE-----/!d' $INPUT > $OUTPUT

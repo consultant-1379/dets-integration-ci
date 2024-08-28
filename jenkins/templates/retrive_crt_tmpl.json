@@ -1,0 +1,6 @@
+{
+    "CertificateDN": "\\VED\\Policy\\Automation\\sts-oss-support\\CERT_CN_REPLACE",
+    "Format": "Base64",
+    "IncludeChain": true
+}
+    

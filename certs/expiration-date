@@ -1,0 +1,42 @@
+#!/bin/bash
+
+RED='\033[0;31m'	# already expired
+ORANGE='\033[0;33m'	# expire in two weeks
+GREEN='\033[0;32m'	# after two weeks
+NC='\033[0m' # No Color
+EXPIRED_ONLY="false"
+WEEKS=2
+
+[ -z "$1" ] && echo "$0 [<within-these-weeks>|expired]" && exit 1
+[ "$1" == "expired" ] && echo "display only expired certificates" && EXPIRED_ONLY="true"
+WEEKS=$1
+
+now=$(date +%s)
+for cert in $(find . -name '*.bundle'); do
+    openssl x509 -in $cert -text | grep "Not After" > answer
+    sed -i 's/Not After ://' answer
+    exp_date=$(date +%s -d "$(cat answer)")
+    next_week=$((now + $WEEKS*604800))
+    exp_date_human=$(date +%F --date="@$exp_date")
+
+    color="red";
+    if [ $exp_date -gt $next_week ]; then
+        color="green";
+    elif [ $exp_date -gt $now ]; then
+        color="orange";
+    else
+        color="red";
+    fi;
+
+    [ $EXPIRED_ONLY == "true" ] && [ $color != "red" ] && continue
+
+    echo "+---------------"
+    echo $cert;
+    if [ $color == "green" ]; then
+        printf "${GREEN}Expires in more than $WEEKS weeks: ${exp_date_human}${NC}\n"
+    elif [ $color == "orange" ]; then
+        printf "${ORANGE}Expires within $WEEKS weeks: ${exp_date_human}${NC}\n"
+    else
+        printf "${RED}Expired: ${exp_date_human}${NC}\n"
+    fi
+done

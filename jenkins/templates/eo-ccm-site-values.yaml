@@ -1,0 +1,199 @@
+global:
+  createClusterRoles: true
+  hosts:
+    gas: 'GAS_HOST_REPLACE'
+    gr: 'GR_HOST_REPLACE'
+    iam: 'IAM_HOST_REPLACE'
+    pf: 'PF_HOST_REPLACE'
+    so: 'SO_HOST_REPLACE'
+    uds: 'UDS_HOST_REPLACE'
+    vnfm: 'VNFM_HOST_REPLACE'
+    cm: 'eocm.hall144-eiap.ews.gic.ericsson.se'
+    th: 'TH_HOST_REPLACE'
+  ingressClass: eo_iccr
+  registry:
+    password: 'PASSWORD_REPLACE'
+    url: 'DOCKER_REGISTRY_REPLACE'
+    username: 'USERNAME_REPLACE'
+  serviceMesh:
+    enabled: false
+  meshConfig:
+    enableTracing: false
+    defaultConfig:
+      tracing:
+        sampling: 10
+  proxy:
+    tracer: zipkin
+  tracer:
+    zipkin:
+      address: ''
+  support:
+    ipv6:
+      enabled: IPV6_ENABLE_REPLACE
+  timezone: UTC
+  networkPolicy:
+    enabled: false
+  externalIPv4:
+    loadBalancerIP: INGRESS_IP_REPLACE
+  externalIPv6:
+    loadBalancerIP: null
+  siteName: 'test-site'
+  geoRedundancy:
+    enabled: false
+  clusterName: 'eocm'
+  domainName: 'hall144-eiap.ews.gic.ericsson.se'
+  ericsson:
+    licensing:
+      licenseDomains:
+      - customerId: 800119
+        productType: EDA
+        swltId: EDA2_01
+tags:
+  eoCm: false
+  eoEvnfm: false
+  eoPf: false
+  eoSo: false
+  eoUds: false
+  eoVmvnfm: false
+eric-cloud-native-base:
+  eric-ctrl-bro:
+    persistence:
+      persistentVolumeClaim:
+        size: 20Gi
+    sftp:
+      password: 'dummy'
+      username: 'dummy'
+  eric-data-search-engine:
+    service:
+      network:
+        protocol:
+          IPv6: IPV6_ENABLE_REPLACE
+  eric-sec-access-mgmt:
+    replicaCount: 2
+  eric-tm-ingress-controller-cr:
+    enabled: true
+    service:
+      loadBalancerIP: 'INGRESS_IP_REPLACE'
+      annotations:
+        cloudProviderLB: {}
+      externalTrafficPolicy: Cluster
+    replicaCount: 1
+  eric-log-transformer:
+    egress:
+      syslog:
+        enabled: false
+        remoteHosts: []
+    global:
+      security:
+        tls:
+          enabled: true
+    security:
+      tls:
+        logshipper:
+          enabled: false
+  eric-data-object-storage-mn:
+    persistentVolumeClaim:
+      size: 10Gi
+  eric-fh-snmp-alarm-provider:
+    sendAlarm: false
+geo-redundancy:
+  enabled: false
+eric-oss-common-base:
+  sessionTokens:
+    maxSessionDurationSecs: 36000
+    maxIdleTimeSecs: 1800
+  eric-eo-evnfm-nbi:
+    eric-evnfm-rbac:
+      defaultUser:
+        username: 'vnfm'
+        password: 'Ericsson123!'
+  eric-gr-bur-orchestrator:
+    credentials:
+      username: 'bur-user'
+      password: 'Ericsson123!'
+    gr:
+      bro:
+        autoDelete:
+          backupsLimit: 10
+      sftp:
+        url: 'dummy:22/path/'
+        username: 'dummy'
+        password: 'dummy'
+      cluster:
+        role: 'PRIMARY'
+        secondary_hostnames:
+        - 'dummy'
+      registry:
+        secondarySiteContainerRegistryHostname: 'fakehostname.com'
+  system-user:
+    credentials:
+      username: 'system-user'
+      password: 'Ericsson123!'
+  gas:
+    defaultUser:
+      username: 'gas-user'
+      password: 'Ericsson123!'
+  eric-eo-usermgmt:
+    replicaCount: 2
+  eric-eo-usermgmt-ui:
+    replicaCount: 2
+eric-eo-cm:
+  defaultUser:
+    username: 'cm-user'
+    password: 'Ericsson123!'
+  eric_eo_cm_broker_credentials:
+    password: 'Ericsson123!'
+  eric-eo-cm-db:
+    password: 'Ericsson123!'
+    superpwd: 'Ericsson123!'
+    db_cmdb_pass: 'Ericsson123!'
+    db_ecm_pass: 'Ericsson123!'
+    db_actprovadapter_pass: 'Ericsson123!'
+  eric-eo-cm-ns-lcm:
+    eric-eo-cm-ns-lcm-db:
+      password: 'Ericsson123!'
+      superpwd: 'Ericsson123!'
+  eric-eo-cm-cust-wf:
+    enabled: false
+  eric-eo-cm-order-mgmt-ca:
+    eric-eo-cm-order-mgmt-ca-db:
+      password: 'Ericsson123!'
+      superpwd: 'Ericsson123!'
+  eric-eo-cm-idam:
+    domain: 'hall144-eiap.ews.gic.ericsson.se'
+  eric-eo-cm-core:
+    edaConfigJob:
+      eoadminPassword: 'Ericsson123!'
+      adminPassword: 'Ericsson123!'
+      ecmadminPassword: 'Ericsson123!'
+      ecmActPassword: 'Ericsson123!'
+      scmClientId: 236fa340-b92f-439f-b87b-1e2362b45edb
+      scmClientSecret: bc76ba88-7f60-4630-8f44-7abeae0ff5a2
+  eric-eo-cm-onboarding:
+    enabled: false
+  toscaocm:
+    password: 'Ericsson123!'
+    superpwd: 'Ericsson123!'
+  eric-eo-cm-gr:
+    grConfiguration:
+      thisSite:
+        namespace: ''
+        tlsProxyIP: ''
+      otherSite:
+        name: ''
+        namespace: ''
+        tlsProxyIP: ''
+  eric-eo-cm-vim-discovery:
+    logging:
+      level:
+        root: debug
+  eric-eo-cm-vim-dyn-capacity:
+    logging:
+      level:
+        root: debug
+  eric-eo-cm-fm:
+    logging:
+      level:
+        root: info
+        eo_cm: debug
+

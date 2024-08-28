@@ -1,0 +1,13 @@
+{
+    "PolicyDN": "\\VED\\Policy\\Automation\\sts-oss-support\\",
+    "CustomFields": [      
+         {
+            "Name":"Alternate Contact Email",
+            "Values":[
+               "AD+EGAD ericsson.se AD:PDLSTSOSSS"
+            ]
+         }],
+    "Subject":"sts-oss-support",
+   "PKCS10": "CSR_REPLACE" 
+}
+   

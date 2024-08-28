@@ -1,0 +1,5 @@
+eric-oss-dmm:
+  eric-oss-dmm-kf-op-sz:
+    kafka-cluster:
+      kafka-listeners:
+        oauthIngressTlsSecretName : eic-tls-secret

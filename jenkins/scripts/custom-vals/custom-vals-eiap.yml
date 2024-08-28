@@ -1,0 +1,33 @@
+grafana:
+  enabled: false
+alertmanager:
+  enabled: false
+defaultRules:
+  create: false
+
+kube-state-metrics:
+  metricAnnotationsAllowList:
+    - configmaps=[eiap-version, eo-version, booking-start, booking-end, users, admin-users, booked-for, booked, reserved, domain, tags, team-name]
+
+prometheus:
+  prometheusSpec:
+    additionalScrapeConfigs:
+      - job_name: federate_eic_pm
+        scrape_interval: 3m
+        scrape_timeout: 1m
+        honor_labels: true
+        metrics_path: '/metrics/viewer/federate'
+        params:
+          'match[]':
+            - '{job="kubernetes-pods",  __name__="keycloak_logins"}'
+            - '{job="kubernetes-pods",  __name__=~"keycloak.*"}'
+            - '{job="kubernetes-pods",  __name__=~"istio_requests.*"}'
+
+        static_configs:
+          - targets:
+            - 'eric-pm-server.CLUSTER_REPLACE-eric-eic-0:9090'
+            - 'eric-pm-server.CLUSTER_REPLACE-eric-eic-1:9090'
+            - 'eric-pm-server.CLUSTER_REPLACE-eric-eic-2:9090'
+            - 'eric-pm-server.CLUSTER_REPLACE-eric-eic-3:9090'
+            - 'eric-pm-server.CLUSTER_REPLACE-eric-eic-4:9090'
+            - 'eric-pm-server.CLUSTER_REPLACE-eric-eic-5:9090'

@@ -1,0 +1,97 @@
+{
+    "adc-e2e-cicd":{
+        "tags": "adc dmm", 
+        "cpu": "43",
+        "ram":"77"
+    },
+    "eas-e2e-cicd" : {
+        "tags": "eas ch dmm th", 
+        "cpu": "58",
+        "ram": "114"
+    },
+    "dmm-e2e-cicd":{
+        "tags": "dmm", 
+        "cpu": "38.5", 
+        "ram": "69"
+    },
+    "topology-handling-e2e-cicd" : {
+        "tags": "th", 
+        "cpu": "39", 
+        "ram": "82"
+    },
+    "app-mgr-e2e-cicd" : {
+        "tags":"appmgr", 
+        "cpu": "32", 
+        "ram": "59.5"
+    },
+    "config-handling-e2e-cicd" : {
+        "tags":"ch eas th", 
+        "cpu": "48",
+        "ram": "98.5"
+    },
+    "ud-eiap" : {
+        "tags":"uds", 
+        "cpu": "40", 
+        "ram": "76"
+    },
+    "ta-e2e-cicd" : {
+        "tags": "ta", 
+        "cpu" : "31",
+        "ram": "60"
+    },
+    "pf-e2e-cicd"  :{
+        "tags":"pf", 
+        "cpu": "34",
+        "ram": "58.5"
+    },
+    "so-e2e-cicd" : {
+        "tags": "so th eas ch dmm", 
+        "cpu": "74",
+        "ram": "152"
+    },
+    "full-EIAP" : {
+        "tags":"so pf uds adc th dmm appmgr ch ta eas os pmh", 
+        "cpu": "105", 
+        "ram": "203"
+    },
+    "os-e2e-cicd" : {
+        "tags":"os", 
+        "cpu": "32", 
+        "ram":"64"
+    },
+    "pmh-e2e-cicd" : {
+        "tags":"pmh dmm", 
+        "cpu": "52",
+        "ram": "92"
+    },
+    "eca-e2e-cicd" : {
+        "tags":"eoEca",
+        "cpu": "100",
+        "ram": "100"
+    },
+    "uds-e2e-cicd" : {
+        "tags":"eoUds", 
+        "cpu":"38",
+        "ram": "72"
+    },
+    "pf-e2e-cicd" : {
+        "tags":"eoPf", 
+        "cpu":"27", 
+        "ram": "47"
+    },
+    "evnfm" : {
+        "tags":"eoEvnfm", 
+        "cpu": "32",
+        "ram": "57"
+    },
+    "vm-vnfm" : {
+        "tags":"eoVmvnfm", 
+        "cpu":"20", 
+        "ram":"41"
+    },
+    "eo-so": {
+        "tags":"eoSo", 
+        "cpu": "63", 
+        "ram":"133"
+    }
+}

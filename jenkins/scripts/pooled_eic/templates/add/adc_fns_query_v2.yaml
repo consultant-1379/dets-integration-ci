@@ -1,0 +1,90 @@
+eric-oss-adc:
+  eric-oss-enm-fns:
+    configuredQueries: |-
+      enms:
+        - name: ENM_NAME_REPLACE
+          periodSeconds: 60
+          queries:
+            - name: query1
+              topic: sftp-filetrans
+              dmmDataTypeRegistrationParameters:
+                dataSpace: "4G5G"
+                dataCategory: PM_COUNTERS
+              enmFileLookupServiceParameters:
+                dataType: PM_STATISTICAL
+                nodeType: "RadioNode"
+                id: -1
+              fileType: "xml.gz"
+        - name: restsimpm
+          periodSeconds: 60
+          queries:
+            - name: query2
+              topic: sftp-filetrans
+              dmmDataTypeRegistrationParameters:
+                dataSpace: "4G5G"
+                dataCategory: PM_COUNTERS
+              enmFileLookupServiceParameters:
+                dataType: PM_STATISTICAL
+                nodeType: "RadioNode"
+                id: -1
+              fileType: "xml.gz"
+            - name: query3
+              topic: 4g-event
+              fileType: ""
+              fileLocation: ".*_1\\.bin(?:\\.gz)?$"
+              dmmDataTypeRegistrationParameters:
+                dataSpace: "4G"
+                dataCategory: "PM_EVENTS"
+              enmFileLookupServiceParameters:
+                dataType: PM_CELLTRACE
+                nodeType: "RadioNode"
+                id: -1
+    dmm:
+      dataCatalog:
+        messageBusName: eric-oss-dmm-kf-op-sz-kafka-bootstrap
+        messageBusNamespace: NAMESPACE_REPLACE
+    ignoreSubscription: false
+    secureConnection:
+      serverCertificates:
+        secretNames:
+          - enm-cacert-secret
+          - test-enm-cert
+          - stub-cert
+  eric-oss-sftp-filetrans:
+    subsystem:
+      name: ENM_NAME_REPLACE
+    dmm:
+      enabled: true
+      data_catalog:
+        message_bus_name: "eric-oss-dmm-kf-op-sz-kafka-bootstrap"
+        message_bus_namespace: NAMESPACE_REPLACE
+        data_provider_type_version_id: ENM_NAME_REPLACE
+        data_collector_name: "pm-counter-sftp-filetrans-ENM_NAME_REPLACE"
+        data_service:
+          data_service_instance:
+            consumed_data_provider: ENM_NAME_REPLACE
+    spring:
+      kafka:
+        auto:
+          start: true
+        topics:
+          output:
+            name: ran-pm-counter-sftp-file-transfer
+          enm_id: ENM_NAME_REPLACE
+    connected:
+      systems:
+        enabled: true
+  eric-oss-sftp-filetrans-ran-2:
+    enabled: true
+    dmm:
+      data_catalog:
+        data_service:
+          data_service_instance:
+            consumed_data_provider: restsimpm
+            consumed_data_space: "4G5G"
+    subsystem:
+      name: restsimpm
+    spring:
+      kafka:
+        topics:
+          enm_id: "restsimpm"

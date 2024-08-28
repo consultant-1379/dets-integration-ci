@@ -1,0 +1,27 @@
+#!/usr/bin/expect
+
+if { [info exists ::env(BACKUP_USER_USERNAME)] } {
+    set sftp-username $env(BACKUP_USER_USERNAME)
+    set sftp-password $env(BACKUP_USER_PASSWORD)
+}
+
+set user-username $env(IDUN_USER_USERNAME)
+set user-password $env(IDUN_USER_PASSWORD)
+
+set timeout 120
+set command [lindex $argv 0]
+
+spawn /workdir/$env(SUB_MODULE_PATH)jenkins/scripts/interactive-backup-commands.sh $command   
+expect {
+    "User Username: " {send "${user-username}\r"; exp_continue}
+    "User Password: " {send "${user-password}\r"; exp_continue}
+
+    "SFTP Username: " {send "${sftp-username}\r"; exp_continue}
+    "SFTP Password: " {send "${sftp-password}\r"; exp_continue}
+
+    -re {.*\[ERROR\]: (Backup|Housekeeping) .* failed with error} { exit 1 }
+
+    timeout { exit }
+    -re . { exp_continue }
+    eof { exit }
+}

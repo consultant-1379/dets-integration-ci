@@ -1,0 +1,1094 @@
+modelVersion: 2.0
+
+description: "DETES: CI Pipeline"
+
+docker-images:
+  - adp-release-auto: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-adp-release-auto:latest
+  - adp-helm-install: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-py3kubehelmbuilder:latest
+  - adp-helm-install-aws: armdocker.rnd.ericsson.se/proj-idun-aas/bob-py3kubehelmbuilder-aws:0.0.0-3
+  - adp-inca-helmfile-snapshot: armdocker.rnd.ericsson.se/proj-adp-cicd-dev/adp-int-helm-chart-auto:0.5.0-h298abeb
+  - ci-utils: armdocker.rnd.ericsson.se/proj-idun-aas/ci-utils:10.0.0-1
+  # Hard coding the value for deployment manager
+  #- deployment-manager: ${deployment-manager-image-full-name}:${var.int_chart-version}
+  - deployment-manager: armdocker.rnd.ericsson.se/proj-eric-oss-drop/eric-oss-deployment-manager:latest
+  - deployment-manager-aws: armdocker.rnd.ericsson.se/proj-idun-aas/deployment-manager-aws:1.17.0-26
+  - csar-builder: ${csar-builder-image-full-name}
+  - deployment-service: armdocker.seli.gic.ericsson.se/proj-idun-aas/com.ericsson.oss.idunaas.deployment.service:latest
+  - minio-client: armdocker.rnd.ericsson.se/dockerhub-ericsson-remote/minio/mc:latest
+
+properties:
+  - helm-charts-dir: charts
+  - helm-chart-name: eric-oss
+  - kube-config-path: ./admin.conf
+  - chart-repo-oss: https://arm.seli.gic.ericsson.se/artifactory/proj-eric-oss-drop-helm/
+  - helm-chart-artifactory-url: https://arm.seli.gic.ericsson.se/artifactory
+  - deployment-manager-image-name: deployment-manager
+  - image-registry: armdocker.rnd.ericsson.se
+  - deployment-manager-image-repopath: proj-eo/common
+  - ecr_repo: ${env.AWS_ECR_URL}
+  - deployment-manager-ecr: ${ecr_repo}/proj-idun-aas/deployment-manager-aws:1.17.0-26
+  - deployment-manager-image-full-name: ${image-registry}/${deployment-manager-image-repopath}/${deployment-manager-image-name}
+  - csar-builder-image-repo-path: proj-am/releases
+  - csar-builder-image-name: eric-am-package-manager
+  - csar-builder-image-tag: 2.0.40
+  - csar-builder-image-full-name: ${image-registry}/${csar-builder-image-repo-path}/${csar-builder-image-name}:${csar-builder-image-tag}
+  - deployment-manager-flags: "--volume /var/run/docker.sock:/var/run/docker.sock
+                               --volume ${env.PWD}:/workdir
+                               --volume ${env.PWD}/aws:/.aws
+                               --volume /etc/hosts:/etc/hosts
+                               --volume /usr/local/bin:/usr/local/bin
+                               --volume /usr/local/aws-cli:/usr/local/aws-cli
+                               --workdir /workdir
+                               -e AWS_CONFIG_FILE=/workdir/aws/config
+                               -e AWS_SHARED_CREDENTIALS_FILE=/workdir/aws/credentials"
+  - adp-helm-install-flags: "--volume /var/run/docker.sock:/var/run/docker.sock
+                             --volume ${env.PWD}:/workdir
+                             --volume /etc/hosts:/etc/hosts
+                             --volume /usr/local/bin:/usr/local/bin
+                             --volume /usr/local/aws-cli:/usr/local/aws-cli
+                             --workdir /workdir
+                             -e AWS_CONFIG_FILE=/workdir/aws/config
+                             -e AWS_SHARED_CREDENTIALS_FILE=/workdir/aws/credentials"
+  - deployment-service-flags: "--volume /var/run/docker.sock:/var/run/docker.sock
+                               --volume ${deployment-dir}/workdir:/workdir
+                               --volume ${deployment-dir}/aws:/root/.aws
+                               --user 0:0
+                               -e HOME=/root"
+  - ci-utils-flags: "--volume /var/run/docker.sock:/var/run/docker.sock
+                     --volume ${env.PWD}:/workdir
+                     --volume /etc/hosts:/etc/hosts
+                     --volume /usr/local/bin/:/tmp/local/bin/
+                     --volume ${env.PWD}/dockerconfig.json:/.docker/config.json
+                     --workdir /workdir
+                     -e AWS_CONFIG_FILE=/workdir/aws/config
+                     -e AWS_SHARED_CREDENTIALS_FILE=/workdir/aws/credentials"
+  - ci-utils-flags-no-dockerconfig: "--volume /var/run/docker.sock:/var/run/docker.sock
+                                     --volume ${env.PWD}:/workdir
+                                     --volume /etc/hosts:/etc/hosts
+                                     --workdir /workdir
+                                     -e AWS_CONFIG_FILE=/workdir/aws/config
+                                     -e AWS_SHARED_CREDENTIALS_FILE=/workdir/aws/credentials"
+  - deployment-dir: ${env.PWD}/ci/deployments/${env.ENV_NAME}
+  - python-scripts-dir: jenkins/scripts/python-ci-scripts
+  - python-ci-image-name: python-ci-scripts-executor
+  - minio-client-flags: "--volume /var/run/docker.sock:/var/run/docker.sock
+                         --volume ${env.PWD}:/workdir
+                         --volume /etc/hosts:/etc/hosts
+                         --workdir /workdir
+			 -e MC_HOST_minio='http://${env.MINIO_CREDS}@minio.stsoss.seli.gic.ericsson.se:9000'"
+
+env:
+  - PWD
+  - ENV_NAME
+  - NAMESPACE
+  - CRD_NAMESPACE
+  - CHART_NAME
+  - CHART_REPO
+  - INT_CHART_REPO
+  - INT_CHART_NAME
+  - PATH_TO_HELMFILE
+  - INT_CHART_VERSION
+  - DEPLOYMENT_TYPE
+  - DEPLOYMENT_NAME
+  - IAM_AUTHENTICATOR
+  - PATH_TO_CERTIFICATES_FILES
+  - PATH_TO_AWS_FILES
+  - PATH_TO_SITE_VALUES_FILE
+  - PATH_TO_WORKDIR
+  - PATH_TO_KUBECONFIG_FILE
+  - PATH_TO_ENM_CONFIG
+  - PATH_TO_EOCM_CONFIG
+  - FUNCTIONAL_USER_USERNAME
+  - FUNCTIONAL_USER_PASSWORD
+  - STATE_VALUES_FILE
+  - IDUN_USER_USERNAME
+  - IDUN_USER_PASSWORD
+  - ENM_USER_PASSWORD
+  - EOCM_USER_PASSWORD
+  - BACKUP_USER_USERNAME
+  - BACKUP_USER_PASSWORD
+  - BACKUP_SERVER
+  - DEBUG_MODE (default=3)
+  - SO_DEPLOY
+  - UDS_DEPLOY
+  - PF_DEPLOY
+  - PLATFORM_DEPLOY
+  - BRO_SVC_URL (default=none)
+  - PODNAME(default=deploymentmanager)
+  - PF_HOSTNAME (default=none)
+  - UDS_HOSTNAME (default=none)
+  - SO_HOSTNAME (default=none)
+  - IAM_HOSTNAME (default=none)
+  - GAS_HOSTNAME (default=none)
+  - ADC_HOSTNAME (default=none)
+  - TH_HOSTNAME (default=none)
+  - APPMGR_HOSTNAME (default=none)
+  - GR_HOSTNAME (default=none)
+  - TA_HOSTNAME (default=none)
+  - EAS_HOSTNAME (default=none)
+  - CH_HOSTNAME (default=none)
+  - OS_HOSTNAME (default=none)
+  - VNFM_HOSTNAME (default='default')
+  - HELM_REGISTRY_HOSTNAME (default='default')
+  - VNFM_REGISTRY_HOSTNAME (default='default')
+  - DOCKER_FLAGS_NO_DOCKER_CONF
+  - VNFLCM_SERVICE_IP (default='default')
+  - INGRESS_IP (default='default')
+  - EO_CM_HOSTNAME (default='default')
+  - EO_CM_IP (default='default')
+  - EO_CM_ESA_IP (default='default')
+  - DISABLEPUBLICACCESS (default=none)
+  - MONITORING_HOSTNAME (default=none)
+  - ENV_DETAILS_DIR
+  - HELM_TIMEOUT
+  - JIRA
+  - HELM_REPOSITORY_NAME
+  - TIME
+  - JOB
+  - DOCKER_REGISTRY
+  - TAGS
+  - AWS_ECR_URL
+  - PATH_TO_VALUES_FILE
+  - AWS_REGION (default=none)
+  - K8S_VERSION (default=none)
+  - VPC_ID (default=none)
+  - CONTROL_PLANE_SUBNET_IDS (default=none)
+  - WORKER_NODE_SUBNET_ID (default=none)
+  - SECONDARY_VPC_CIDR (default=none)
+  - NODE_INSTANCE_TYPE (default=none)
+  - DISK_SIZE (default=none)
+  - MIN_NODES (default=none)
+  - MAX_NODES (default=none)
+  - SSH_KEYPAIR_NAME (default=none)
+  - PRIVATE_DN (default=none)
+  - KUBEDOWNSCALER (default=none)
+  - BACKUP_AMI_ID (default=none)
+  - BACKUP_INSTANCE_TYPE (default=none)
+  - BACKUP_DISK (default=none)
+  - BACKUP_PASS (default=none)
+  - GET_ALL_IMAGES (default=false)
+  - INCLUDE_CHART_IMAGES (default='false')
+  - FETCH_CHARTS (default='false')
+  - CASSANDRA_USERNAME
+  - CASSANDRA_PASSWORD
+  - ACTION
+  - DEPLOYMENT_NAME
+  - URL_VALUE
+  - DEPLOYMENT
+  - SCRIPT_ACTION
+  - GRAFANA_CREDS_USR
+  - GRAFANA_CREDS_PSW
+  - EKS_VERSION
+  - INSTANCE_SIZE
+  - MINIO_CREDS
+
+var:
+  - int_chart-version
+  - helm-chart-repo
+  - helmfile-repo
+  - secret-list
+  - oss-version
+  - ecr-token
+  - backup_name
+
+rules:
+  set-helm-repository:
+    - task: set-helm-repository
+      cmd: echo ${helm-chart-artifactory-url}/${env.HELM_REPOSITORY_NAME} > .bob/var.helm-chart-repo
+
+  set-helmfile-repository:
+    - task: set-helmfile-repository
+      cmd: echo ${helmfile-package-artifactory-url}/${env.HELM_REPOSITORY_NAME} > .bob/var.helmfile-repo
+
+  set-backup-name:
+    - task: set-name
+      cmd: echo ${env.ENV_NAME}_${var.oss-version}_$(date +%Y-%m-%d-%H-%M) > .bob/var.backup_name
+
+  fetch-chart:
+    - task: helm-pull
+      docker-image: adp-release-auto
+      cmd: bash -c 'helm repo add oss ${var.helm-chart-repo} --username ${env.FUNCTIONAL_USER_USERNAME} --password "${env.FUNCTIONAL_USER_PASSWORD}";
+          helm fetch --version ${env.INT_CHART_VERSION} oss/${helm-chart-name}'
+
+  git-clean:
+    - task: git-clean
+      cmd: docker run --rm -v ${env.PWD}:/git/ armdocker.rnd.ericsson.se/dockerhub-ericsson-remote/alpine/git:v2.32.0 clean -xdff
+
+  fix-ownership:
+    - task: chown
+      cmd: docker run --rm --entrypoint bash
+                        --volume ${env.PWD}:/workdir
+                        --user 0:0
+                        armdocker.seli.gic.ericsson.se/proj-idun-aas/com.ericsson.oss.idunaas.deployment.service:latest
+                        -c 'chown -R 1000:1000 /workdir/ci'
+
+  gather-environment-details:
+    - task: gather-environment-details
+      cmd: bash -c '
+        if [ -f ${env.ENV_DETAILS_DIR}/${env.ENV_NAME}.conf ]; then
+          echo "Gathering details for ${env.ENV_NAME}";
+          cat ${env.ENV_DETAILS_DIR}/${env.ENV_NAME}.conf > artifact.properties;
+        else
+          echo "Unable to file file associated with ${env.ENV_NAME}";
+          exit 1;
+        fi'
+
+  get-latest-chart-version_from_drop_repo:
+    - task: helm-search
+      docker-image: adp-release-auto
+      cmd: bash -c 'helm repo add oss ${chart-repo-oss} --username ${env.FUNCTIONAL_USER_USERNAME} --password "${env.FUNCTIONAL_USER_PASSWORD}";
+           helm search repo oss --devel | grep "eric-oss " | cut -f2 > .bob/var.oss-version'
+    - task: write-to-properties
+      cmd: echo "INT_CHART_VERSION=${var.oss-version}" >> artifact.properties
+
+  prepare-workdir:
+    - task: set-chart-version
+      cmd: 'echo ${env.INT_CHART_VERSION} > .bob/var.int_chart-version'
+    - task: create-csar
+      docker-image: csar-builder
+      cmd: generate --name test-deploy-${env.INT_CHART_VERSION} --helm ${helm-chart-name}-${env.INT_CHART_VERSION}.tgz --no-images
+    - task: copy-aws-credentials
+      cmd: cp -pr ${env.PWD}/${env.PATH_TO_AWS_FILES} ${env.PWD}/aws
+    - task: deployment-manager-init
+      docker-image: deployment-manager
+      docker-flags:
+        - ${deployment-manager-flags}
+      cmd: init
+    - task: copy-certificate-files
+      cmd: cp -prf ${env.PWD}/${env.PATH_TO_CERTIFICATES_FILES} ${env.PWD}/
+
+  prepare-aws-credentials:
+    - task: copy-aws-credentials-workdir
+      cmd: cp -pr ${env.PWD}/${env.PATH_TO_AWS_FILES} /workdir
+
+  prepare-site-values:
+    - task: deployment-manager-prepare
+      docker-image: deployment-manager
+      docker-flags:
+        - ${deployment-manager-flags}
+      cmd: prepare --namespace ${env.NAMESPACE}
+    - task: copy-site-values
+      cmd: \cp -f ${env.PWD}/${env.PATH_TO_SITE_VALUES_FILE} ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+    - task: copy-and-override-site-values
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags}
+      cmd: /bin/bash                         /workdir/jenkins/scripts/ymerge.sh
+         --path-to-site-values-override-file /workdir/${env.PATH_TO_SITE_VALUES_FILE}
+         --path-to-output-site-values-file   /workdir/site_values_${env.INT_CHART_VERSION}.yaml
+
+  update-subsystem-values:
+    - task: substitute-enm-details
+      cmd:
+        - perl -pi -e 's/ENM_PASSWORD/'${env.ENM_USER_PASSWORD}'/' ${env.PWD}/${env.PATH_TO_ENM_CONFIG}
+    - task: substitute-eocm-details
+      cmd:
+        - perl -pi -e 's/EOCM_PASSWORD/'${env.EOCM_USER_PASSWORD}'/' ${env.PWD}/${env.PATH_TO_EOCM_CONFIG}
+
+  update-site-values:
+    - task: substitute-registry-details
+      cmd:
+        - perl -pi -e 's/DOCKER_REGISTRY_REPLACE/'${env.DOCKER_REGISTRY}'/'   ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+        - perl -pi -e 's/USERNAME_REPLACE/'${env.FUNCTIONAL_USER_USERNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+        - perl -pi -e 's/PASSWORD_REPLACE/'${env.FUNCTIONAL_USER_PASSWORD}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+    - task: substitute-idun-credential
+      cmd:
+        - perl -pi -e 's/IDUN_CRED_REPLACE/'${env.IDUN_USER_PASSWORD}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+    - task: substitute-ecr-token
+      cmd:
+        - perl -pi -e 's/PASSWORD_REPLACE/'${var.ecr-token}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+    - task: substitute-application-hosts
+      cmd: bash -c """
+        if [[ ${env.SO_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/SO_HOST_REPLACE/'${env.SO_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.UDS_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/UDS_HOST_REPLACE/'${env.UDS_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.IAM_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/IAM_HOST_REPLACE/'${env.IAM_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.PF_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/PF_HOST_REPLACE/'${env.PF_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.ADC_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/ADC_HOST_REPLACE/'${env.ADC_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.TA_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/TA_HOST_REPLACE/'${env.TA_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.EAS_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/EAS_HOST_REPLACE/'${env.EAS_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.CH_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/CH_HOST_REPLACE/'${env.CH_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.TH_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/TH_HOST_REPLACE/'${env.TH_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.APPMGR_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/APPMGR_HOST_REPLACE/'${env.APPMGR_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.OS_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/OS_HOST_REPLACE/'${env.OS_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.GAS_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/GAS_HOST_REPLACE/'${env.GAS_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.VNFM_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/VNFM_HOST_REPLACE/'${env.VNFM_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.VNFM_REGISTRY_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/VNFM_REGISTRY_HOST_REPLACE/'${env.VNFM_REGISTRY_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.HELM_REGISTRY_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/HELM_CHART_HOST_REPLACE/'${env.HELM_REGISTRY_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.GR_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/GR_HOST_REPLACE/'${env.GR_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.VNFLCM_SERVICE_IP} != "default" ]]; then
+          perl -pi -e 's/VNFLCM_SERVICE_IP_REPLACE/'${env.VNFLCM_SERVICE_IP}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.INGRESS_IP} != "default" ]]; then
+          perl -pi -e 's/INGRESS_IP_REPLACE/'${env.INGRESS_IP}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.EO_CM_HOSTNAME} != "default" ]]; then
+          perl -pi -e 's/EO_CM_HOST_REPLACE/'${env.EO_CM_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.EO_CM_IP} != "default" ]]; then
+          perl -pi -e 's/EO_CM_IP_REPLACE/'${env.EO_CM_IP}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;
+        if [[ ${env.EO_CM_ESA_IP} != "default" ]]; then
+          perl -pi -e 's/EO_CM_ESA_IP_REPLACE/'${env.EO_CM_ESA_IP}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml;
+        fi;"""
+    - task: substitute-backup-user-credential
+      cmd:
+        - perl -pi -e 's/SO_HOST_REPLACE/'${env.SO_HOSTNAME}'/' ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+
+    - task: substitute-application-deployment-option
+      cmd: docker run --rm -u $(id -u):$(id -g)
+        -v ${env.PWD}:/ci-scripts/output-files
+        ${python-ci-image-name}:latest set-deployment-tags --deployment-tags "${env.TAGS}" --state-values-file output-files/site_values_${env.INT_CHART_VERSION}.yaml
+
+    - task: show
+      cmd:
+        - echo "TAGS=${env.TAGS}"
+        - echo "SITE_VALUES_DEBUG ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml"
+        - cat ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+
+  generate-aws-ecr-token:
+    - task: generate-token
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags}
+      cmd: "aws ecr get-login-password >> .bob/var.ecr-token"
+    - task: write-to-properties
+      cmd: echo "AWS_ECR_TOKEN:${var.ecr-token}" >> artifact.properties
+
+  execute-deployment-manager:
+    - task: deploy-helm-chart
+      docker-image: deployment-manager
+      docker-flags:
+        - "--user 0:0"
+        - ${deployment-manager-flags}
+      cmd: ${env.DEPLOYMENT_TYPE} --namespace ${env.NAMESPACE} --helm-timeout ${env.HELM_TIMEOUT} --debug --log-level debug
+
+  gather-deployment-logs:
+    - task: gather-logs
+      docker-image: deployment-manager
+      docker-flags:
+        - ${deployment-manager-flags}
+      cmd: collect-logs --namespace ${env.NAMESPACE}
+
+  pause-resume-kube-downscaler:
+    - task: pause-resume-kube-downscaler
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: bash -c "/workdir/jenkins/scripts/pause_resume_kube_downscaler.sh ${env.ACTION} ${kube-config-path}"
+
+  remove-installed-release:
+    - task: remove-installed-charts
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c "if helm status ${helm-chart-name}-${env.NAMESPACE} --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE}; then helm delete ${helm-chart-name}-${env.NAMESPACE} --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE}; fi"
+    - task: remove-installed-jobs
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c 'kubectl delete jobs --all --namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path}'
+    - task: remove-installed-ves
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c "if helm status eric-csm-ves --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE}; then helm delete eric-csm-ves --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE}; fi"
+
+  remove-installed-pvcs:
+    - task: remove-pvcs
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: bash -c "if kubectl get namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path}; then /workdir/jenkins/scripts/delete_pvcs_in_namespace.sh ${env.NAMESPACE} ${kube-config-path}; fi"
+
+  remove-installed-secrets:
+    - task: remove-secrets
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: bash -c "if kubectl get namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path}; then /workdir/jenkins/scripts/create_delete_secrets.sh delete ${env.NAMESPACE} ${kube-config-path} ${env.IDUN_USER_PASSWORD}; fi"
+
+  remove-release-namespace:
+    - task: remove-namespace
+      docker-image: adp-helm-install-aws
+      docker-flags:
+        - ${adp-helm-install-flags}
+      cmd: /bin/bash -c "kubectl delete namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path}"
+
+  create-release-namespace:
+    - task: create-namespace
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c "kubectl get namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path} || kubectl create namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path}"
+    - task: create-crd-namespace
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c "kubectl get namespace ${env.CRD_NAMESPACE} --kubeconfig ${kube-config-path} || kubectl create namespace ${env.CRD_NAMESPACE} --kubeconfig ${kube-config-path}"
+
+  create-credentials-secrets:
+    - task: create-secrets
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /workdir/jenkins/scripts/create_delete_secrets.sh create ${env.NAMESPACE} ${kube-config-path} ${env.IDUN_USER_PASSWORD}
+
+  push-image-aws-ecr:
+    - task: push-image
+      cmd: cd ${env.PWD}/jenkins/scripts; python3 -m aws_image_manager --helm ${env.PWD}/${helm-chart-name}-${env.INT_CHART_VERSION}.tgz -f ${env.PWD}/${env.PATH_TO_VALUES_FILE} --aws_repo ${env.AWS_ECR_URL} --aws_region ${env.AWS_REGION}
+
+  check-backup-in-bro:
+    - task: list-backups
+      docker-image: deployment-manager
+      docker-flags:
+        - ${deployment-manager-flags}
+      cmd: backup view -h https://${env.BRO_SVC_URL} -n ${env.NAMESPACE}
+    - task: check-backup-to-delete
+      cmd:  grep -q -F ${var.backup_name} logs/*_backup_view.log && touch .delete_backup || true
+
+  delete-backup:
+    - task: delete-backup
+      docker-image: deployment-manager
+      docker-flags:
+        - ${deployment-manager-flags}
+      cmd: backup delete -h https://${env.BRO_SVC_URL} -n ${env.NAMESPACE} --name ${var.backup_name}
+
+  import-backup-from-sftp:
+    - task: import-backup
+      docker-image: deployment-manager
+      docker-flags:
+        - ${adp-helm-install-flags}
+      cmd: backup import -h https://${env.BRO_SVC_URL} --name ${var.backup_name} --namespace ${env.NAMESPACE} -d ${env.BACKUP_SERVER}
+
+  import-backup-from-sftp-public:
+    - task: import-backup-public
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c "kubectl exec --kubeconfig ${kube-config-path} deploymentmanager -- /venv/.venv/bin/python -m deployment_manager backup import -h https://${env.BRO_SVC_URL} -n ${var.backup_name} -u so-user:${env.IDUN_USER_PASSWORD} -d ${env.BACKUP_SERVER}:22/backup-data -c ${env.BACKUP_USER_USERNAME}:${env.BACKUP_USER_PASSWORD}"
+
+  pre-restoration-hook:
+    - task: restore-pre-hook
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash /workdir/jenkins/scripts/restore_helper_for_SO.sh
+                        --namespace ${env.NAMESPACE}
+                        --kubeconfig ${kube-config-path}
+                        --exec-hook pre
+
+  post-restoration-hook:
+    - task: restore-post-hook
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash /workdir/jenkins/scripts/restore_helper_for_SO.sh
+                        --namespace ${env.NAMESPACE}
+                        --kubeconfig ${kube-config-path}
+                        --exec-hook post
+
+  restore-from-backup-public:
+    - task: restore-backup-public
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c "kubectl exec --kubeconfig ${kube-config-path} deploymentmanager -- /venv/.venv/bin/python -m deployment_manager restore -h https://${env.BRO_SVC_URL} -n ${var.backup_name} -u so-user:${env.IDUN_USER_PASSWORD}"
+
+  restore-from-backup:
+    - task: restore-backup
+      docker-image: deployment-manager
+      docker-flags:
+        - ${deployment-manager-flags}
+      cmd: restore -h https://${env.BRO_SVC_URL} --name ${var.backup_name} --namespace ${env.NAMESPACE}
+
+  get-backup-name:
+    - task: backup-name
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /workdir/jenkins/scripts/get_verify_backup_name.sh restore ${env.NAMESPACE} ${kube-config-path} ${env.INT_CHART_VERSION} site_values_${env.INT_CHART_VERSION}.yaml
+
+  check-rollback-needed:
+    - task: check-rollback
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /workdir/jenkins/scripts/get_verify_backup_name.sh rollback ${env.NAMESPACE} ${kube-config-path} ${env.INT_CHART_VERSION} site_values_${env.INT_CHART_VERSION}.yaml
+  
+  ##NEW Interactive backup
+  copy-utils-dm-pod-public:
+    - task: copy-utils
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+      cmd:
+        - /bin/bash -c "kubectl --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE} cp /workdir deploymentmanager:/workdir"
+        - /bin/bash -c "kubectl --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE} cp /usr/local/bin deploymentmanager:/usr/local/"
+        - /bin/bash -c "kubectl --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE} cp /usr/local/aws-cli/ deploymentmanager:/usr/local/"
+
+  copy-logs-folder-from-dm-pod:
+    - task: copy-logs-folder-from-dm-pod
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+      cmd: /bin/bash -c "kubectl --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE} cp deploymentmanager:/workdir/logs /workdir"
+
+  deploy-dm:
+    - task: deploy-deploymentmanager
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+      cmd: /bin/bash -c "kubectl apply -f /workdir/jenkins/templates/dm-pod.yaml --namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path}; sleep 10"
+
+  check-pod-status:
+    - task: check-status
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+      cmd: /bin/bash -c "/workdir/jenkins/scripts/get_pod_status.sh --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE} --podname ${env.PODNAME}"
+
+  cleanup-dm:
+    - task: delete-deploymentmanager
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+      cmd: /bin/bash -c "kubectl delete pod/deploymentmanager --namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path} --grace-period=1"
+
+  backup-export-interactive:
+    - task: interactive-create
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+        - " -e BACKUP_USER_USERNAME=${env.BACKUP_USER_USERNAME} -e BACKUP_USER_PASSWORD=${env.BACKUP_USER_PASSWORD} -e IDUN_USER_USERNAME=${env.IDUN_USER_USERNAME} -e IDUN_USER_PASSWORD=${env.IDUN_USER_PASSWORD} -e SUB_MODULE_PATH='' -e NAMESPACE=${env.NAMESPACE} -e GAS_HOSTNAME=${env.BRO_SVC_URL} -e DEBUG_MODE=${env.DEBUG_MODE} -e BACKUP_SERVER=${env.BACKUP_SERVER}"
+      cmd: /workdir/jenkins/scripts/interactive-backup.exp "backup create"
+
+    - task: interactive-export
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+        - " -e BACKUP_USER_USERNAME=${env.BACKUP_USER_USERNAME} -e BACKUP_USER_PASSWORD=${env.BACKUP_USER_PASSWORD} -e IDUN_USER_USERNAME=${env.IDUN_USER_USERNAME} -e IDUN_USER_PASSWORD=${env.IDUN_USER_PASSWORD} -e SUB_MODULE_PATH='' -e NAMESPACE=${env.NAMESPACE} -e GAS_HOSTNAME=${env.BRO_SVC_URL} -e DEBUG_MODE=${env.DEBUG_MODE} -e BACKUP_SERVER=${env.BACKUP_SERVER}"
+      cmd: /workdir/jenkins/scripts/interactive-backup.exp "backup export"
+      
+  check-backup-in-bro-interactive:
+    - task: list-backups-interactive
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+        - " -e BACKUP_USER_USERNAME=${env.BACKUP_USER_USERNAME} -e BACKUP_USER_PASSWORD=${env.BACKUP_USER_PASSWORD} -e IDUN_USER_USERNAME=${env.IDUN_USER_USERNAME} -e IDUN_USER_PASSWORD=${env.IDUN_USER_PASSWORD} -e SUB_MODULE_PATH='' -e NAMESPACE=${env.NAMESPACE} -e GAS_HOSTNAME=${env.BRO_SVC_URL} -e DEBUG_MODE=${env.DEBUG_MODE} -e BACKUP_SERVER=${env.BACKUP_SERVER}"
+      cmd: /workdir/jenkins/scripts/interactive-backup.exp "backup view"
+    - task: check-backup-to-delete
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+      cmd: /bin/bash -c "kubectl --namespace ${env.NAMESPACE} exec --kubeconfig ${kube-config-path} deploymentmanager -- bash -c 'grep -q -F ${var.backup_name} /workdir/logs/*_backup_view.log' && touch .delete_backup" || true
+
+  delete-backup-interactive:
+    - task: delete-backup
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+        - " -e BACKUP_USER_USERNAME=${env.BACKUP_USER_USERNAME} -e BACKUP_USER_PASSWORD=${env.BACKUP_USER_PASSWORD} -e IDUN_USER_USERNAME=${env.IDUN_USER_USERNAME} -e IDUN_USER_PASSWORD=${env.IDUN_USER_PASSWORD} -e SUB_MODULE_PATH='' -e NAMESPACE=${env.NAMESPACE} -e GAS_HOSTNAME=${env.BRO_SVC_URL} -e DEBUG_MODE=${env.DEBUG_MODE} -e BACKUP_SERVER=${env.BACKUP_SERVER}"
+      cmd: /workdir/jenkins/scripts/interactive-backup.exp "backup delete"
+  
+  apply-workaround-for-restore:
+    - task: apply-workaround
+      cmd: bash -c "jenkins/scripts/apply_workaround_for_restore.sh --path-to-kubeconfig-file ${kube-config-path} --namespace ${env.NAMESPACE}"
+  
+  import-restore-interactive:
+    - task: interactive-import
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+        - " -e BACKUP_USER_USERNAME=${env.BACKUP_USER_USERNAME} -e BACKUP_USER_PASSWORD=${env.BACKUP_USER_PASSWORD} -e IDUN_USER_USERNAME=${env.IDUN_USER_USERNAME} -e IDUN_USER_PASSWORD=${env.IDUN_USER_PASSWORD} -e SUB_MODULE_PATH='' -e NAMESPACE=${env.NAMESPACE} -e GAS_HOSTNAME=${env.BRO_SVC_URL} -e DEBUG_MODE=${env.DEBUG_MODE} -e BACKUP_SERVER=${env.BACKUP_SERVER}"
+      cmd: /workdir/jenkins/scripts/interactive-backup.exp "backup import"
+
+    - task: interactive-restore
+      docker-image: ci-utils
+      docker-flags:
+        - ${env.DOCKER_FLAGS_NO_DOCKER_CONF}
+        - " -e BACKUP_USER_USERNAME=${env.BACKUP_USER_USERNAME} -e BACKUP_USER_PASSWORD=${env.BACKUP_USER_PASSWORD} -e IDUN_USER_USERNAME=${env.IDUN_USER_USERNAME} -e IDUN_USER_PASSWORD=${env.IDUN_USER_PASSWORD} -e SUB_MODULE_PATH='' -e NAMESPACE=${env.NAMESPACE} -e GAS_HOSTNAME=${env.BRO_SVC_URL} -e DEBUG_MODE=${env.DEBUG_MODE} -e BACKUP_SERVER=${env.BACKUP_SERVER}"
+      cmd: /workdir/jenkins/scripts/interactive-backup.exp restore
+  
+  create-backup:
+    - task: create
+      docker-image: deployment-manager
+      docker-flags:
+        - ${deployment-manager-flags}
+      cmd: backup create -h https://${env.BRO_SVC_URL} --name ${var.backup_name} --namespace ${env.NAMESPACE}
+
+  create-backup-public:
+    - task: create-public
+      docker-image: adp-helm-install-aws
+      docker-flags:
+        - ${adp-helm-install-flags}
+      cmd: /bin/bash -x -c "kubectl exec --kubeconfig ${kube-config-path} deploymentmanager -- /venv/.venv/bin/python -m deployment_manager backup create -h https://${env.BRO_SVC_URL} -n ${var.backup_name} -u so-user:${env.IDUN_USER_PASSWORD}"
+
+  export-backup:
+    - task: export-public
+      docker-image: deployment-manager
+      docker-flags:
+        - ${deployment-manager-flags}
+      cmd: backup export -h https://${env.BRO_SVC_URL} --name ${var.backup_name} --namespace ${env.NAMESPACE} -d ${env.BACKUP_SERVER}
+
+  export-backup-public:
+    - task: export
+      docker-image: adp-helm-install-aws
+      docker-flags:
+        - ${adp-helm-install-flags}
+      cmd: /bin/bash -x -c "kubectl exec --kubeconfig ${kube-config-path} deploymentmanager -- /venv/.venv/bin/python -m deployment_manager backup export -h https://${env.BRO_SVC_URL} -n ${var.backup_name} -u so-user:${env.IDUN_USER_PASSWORD} -d ${env.BACKUP_SERVER}:22/backup-data -c ${env.BACKUP_USER_USERNAME}:${env.BACKUP_USER_PASSWORD}"
+
+  annotate-backup:
+    - task: annotate
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c "kubectl annotate --overwrite namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path} backupname=${var.backup_name}"
+
+  verify-folder:
+    - task: verify-folder
+      cmd: bash -c '
+        if [ ! -d ./ci/deployments/${env.ENV_NAME} ]; then
+          echo "Failed to locate the required deployment folder for ${env.ENV_NAME} at $(pwd)/ci/deployments/${env.ENV_NAME}";
+          exit 1;
+        else
+          echo "Successfully located the deployment folder for ${env.ENV_NAME}";
+        fi'
+
+  generate-artifact-properties:
+    - task: generate-artifact-properties
+      cmd: bash -c '
+        cd ./ci/jenkins/scripts;
+        ./store_params.sh "$(echo "${env.ENV_NAME}" | xargs)"
+                          "$(echo "${env.AWS_REGION}" | xargs)"
+                          "$(echo "${env.K8S_VERSION}" | xargs)"
+                          "$(echo "${env.VPC_ID}" | xargs)"
+                          "$(echo "${env.CONTROL_PLANE_SUBNET_IDS}" | xargs)"
+                          "$(echo "${env.WORKER_NODE_SUBNET_ID}" | xargs)"
+                          "$(echo "${env.SECONDARY_VPC_CIDR}" | xargs)"
+                          "$(echo "${env.NODE_INSTANCE_TYPE}" | xargs)"
+                          "$(echo "${env.DISK_SIZE}" | xargs)"
+                          "$(echo "${env.MIN_NODES}" | xargs)"
+                          "$(echo "${env.MAX_NODES}" | xargs)"
+                          "$(echo "${env.SSH_KEYPAIR_NAME}" | xargs)"
+                          "$(echo "${env.PRIVATE_DN}" | xargs)"
+                          "$(echo "${env.KUBEDOWNSCALER}" | xargs)"
+                          "$(echo "${env.BACKUP_INSTANCE_TYPE}" | xargs)"
+                          "$(echo "${env.BACKUP_AMI_ID}" | xargs)"
+                          "$(echo "${env.BACKUP_DISK}" | xargs)"
+                          "$(echo "${env.BACKUP_PASS}" | xargs)"
+                          "$(echo "${env.SO_HOSTNAME}" | xargs)"
+                          "$(echo "${env.PF_HOSTNAME}" | xargs)"
+                          "$(echo "${env.UDS_HOSTNAME}" | xargs)"
+                          "$(echo "${env.IAM_HOSTNAME}" | xargs)"
+                          "$(echo "${env.GAS_HOSTNAME}" | xargs)"
+                          "$(echo "${env.MONITORING_HOSTNAME}" | xargs)"
+                          ${deployment-dir}/workdir/config.yaml
+                          ${env.PWD}
+                          ${env.ADC_HOSTNAME}
+                          ${env.APPMGR_HOSTNAME}
+                          ${env.OS_HOSTNAME}
+                          ${env.DISABLEPUBLICACCESS};'
+
+  generate-config:
+    - task: generate-config
+      cmd: bash -c '
+        cd ./ci/jenkins/scripts;
+        ./generate_config.sh ${env.ENV_NAME}
+                             ${env.BRO_SVC_URL}
+                             ${env.AWS_REGION}
+                             ${env.K8S_VERSION}
+                             ${env.VPC_ID}
+                             ${env.CONTROL_PLANE_SUBNET_IDS}
+                             ${env.WORKER_NODE_SUBNET_ID}
+                             ${env.SECONDARY_VPC_CIDR}
+                             ${env.NODE_INSTANCE_TYPE}
+                             ${env.DISK_SIZE}
+                             ${env.MIN_NODES}
+                             ${env.MAX_NODES}
+                             ${env.SSH_KEYPAIR_NAME}
+                             ${env.PRIVATE_DN}
+                             ${env.KUBEDOWNSCALER}
+                             ${env.BACKUP_INSTANCE_TYPE}
+                             ${env.BACKUP_AMI_ID}
+                             ${env.BACKUP_DISK}
+                             ${env.BACKUP_PASS}
+                             ${env.SO_HOSTNAME}
+                             ${env.PF_HOSTNAME}
+                             ${env.UDS_HOSTNAME}
+                             ${env.IAM_HOSTNAME}
+                             ${env.GAS_HOSTNAME}
+                             ${env.MONITORING_HOSTNAME}
+                             ${deployment-dir}/workdir
+                             ${env.ADC_HOSTNAME}
+                             ${env.APPMGR_HOSTNAME}
+                             ${env.OS_HOSTNAME}
+                             ${env.DISABLEPUBLICACCESS};'
+
+  verify-aws-tools:
+    - task: verify-all
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: bash -x /workdir/ci/jenkins/scripts/verify-aws-tools.sh
+               --aws-region       ${env.AWS_REGION}
+               --deployment-dir   /workdir/ci/deployments/${env.ENV_NAME}
+
+  eiap-push-images:
+    - task: image-push
+      docker-image: deployment-service
+      docker-flags:
+        - ${deployment-service-flags}
+      cmd: image-push -r ${env.AWS_REGION}
+
+  verify-config:
+    - task: init-idun
+      docker-image: deployment-service
+      docker-flags:
+        - ${deployment-service-flags}
+      cmd: init
+    - task: validate-config
+      docker-image: deployment-service
+      docker-flags:
+        - ${deployment-service-flags}
+      cmd: validate
+
+  install-cluster:
+    - task: setup-cluster
+      docker-image: deployment-service
+      docker-flags:
+        - ${deployment-service-flags}
+      cmd: install -y -v 4 -u ${env.FUNCTIONAL_USER_USERNAME} -p ${env.FUNCTIONAL_USER_PASSWORD}
+
+  configure-cluster:
+    - task: configure-cluster
+      docker-image: deployment-service
+      docker-flags:
+        - ${deployment-service-flags}
+      cmd: configure -y -v 4
+
+  configure-backup-server:
+    - task: configure-backup-server
+      docker-image: deployment-service
+      docker-flags:
+        - ${deployment-service-flags}
+      cmd: configurebackup -y
+
+  gather-installed-oss-version:
+    - task: installed-idun-version
+      docker-image: ci-utils
+      docker-flags: 
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: jenkins/scripts/check_installed_chart_version.sh ${env.NAMESPACE} ${kube-config-path}
+    - task: write-to-proprties
+      cmd: echo "INSTALLED_CHART_VERSION=${var.oss-version}" > artifact.properties
+
+  fetch-helmfile:
+    - task: fetch-helmfile
+      cmd: curl -O -u ${env.FUNCTIONAL_USER_USERNAME}:${env.FUNCTIONAL_USER_PASSWORD} --verbose ${env.INT_CHART_REPO}/${env.INT_CHART_NAME}/${env.INT_CHART_NAME}-${env.INT_CHART_VERSION}.tgz
+
+  helmfile-charts-mini-csar-build:
+    - task: build-mini-csar-from-CHARTS
+      cmd: ${env.PWD}/jenkins/scripts/am_package_manager.sh ${env.PWD}/am_package_manager.properties ${csar-builder-image-full-name} ${env.INCLUDE_CHART_IMAGES}
+
+  untar-and-copy-helmfile-to-workdir:
+    - task: untar-and-copy-helmfile-to-workdir
+      cmd: tar -xvf ${env.INT_CHART_NAME}-${env.INT_CHART_VERSION}.tgz
+
+  fetch-chart-templates:
+    - task: fetch-chart-templates
+      cmd: cp ${env.PWD}/helmfile/templates/manual/values-templates/* ${env.PWD}/values-templates
+
+  update-repositories-file:
+    - task: update-user-details
+      cmd:
+        - perl -pi -e 's/\{\{ env "GERRIT_USERNAME" \}\}/'${env.FUNCTIONAL_USER_USERNAME}'/' ${env.PWD}/eric-eiae-helmfile/repositories.yaml
+        - perl -pi -e 's/\{\{ env "GERRIT_PASSWORD" \}\}/'${env.FUNCTIONAL_USER_PASSWORD}'/' ${env.PWD}/eric-eiae-helmfile/repositories.yaml
+
+  execute-oss-deployment-manager:
+    # TODO: Remove the remove-local-repositories-yaml task
+    - task: remove-local-repositories-yaml
+      cmd: rm ${env.PWD}/eric-eiae-helmfile/repositories.yaml
+    - task: deploy-helmfile
+      docker-image: deployment-manager
+      docker-flags:
+        - "--user 0:0"
+        - ${deployment-manager-flags}
+      cmd: ${env.DEPLOYMENT_TYPE} --namespace ${env.NAMESPACE} --helm-timeout ${env.HELM_TIMEOUT} --skip-crds
+
+  check-helmfile-deployment-status:
+    - task: check-status
+      docker-image: adp-helm-install-aws
+      cmd: ${env.PWD}/ci/jenkins/scripts/check_helmfile_deployment_status.sh ${env.NAMESPACE} ${kube-config-path}
+
+  get-app-details-from-helmfile:
+    - task: get-version-details
+      docker-image: adp-inca-helmfile-snapshot
+      cmd: ${env.PWD}/ci/jenkins/scripts/get_app_version_from_helmfile.sh site_values_${env.INT_CHART_VERSION}.yaml ${env.PATH_TO_HELMFILE}
+
+  # TODO Remove and implement full fix after oss-dm install Workingfetch-site-values:
+  fetch-site-values:
+    - task: fetch-site-values
+      cmd: cp ${env.PWD}/helmfile/templates/manual/site-values.yaml ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+
+  create-kube-config-dir:
+    - task: create-kubeconfig-directory
+      cmd: mkdir ./kube_config
+
+  get-latest-chart-helmfile-version:
+    - task: helm-search
+      docker-image: adp-release-auto
+      cmd: bash -c 'helm repo add oss ${env.INT_CHART_REPO} --username ${env.FUNCTIONAL_USER_USERNAME} --password ${env.FUNCTIONAL_USER_PASSWORD};
+          helm search repo oss --devel | grep "${env.INT_CHART_NAME}" | cut -f2 > .bob/var.oss-version'
+    - task: write-to-properties
+      cmd: echo "INT_CHART_VERSION:${var.oss-version}" >> artifact.properties
+
+  oss-dm-init:
+    - task: deployment-manager-init
+      docker-image: deployment-manager
+      docker-flags:
+        - ${deployment-manager-flags}
+      cmd: init
+
+  build-ci-script-executor-image:
+    - task: docker-build
+      cmd: docker build
+        ${env.PWD}/${python-scripts-dir}
+        --tag ${python-ci-image-name}:latest
+
+  get-latest-helmfile-version:
+    - task: get-latest-helmfile-version
+      cmd: docker run --rm -u $(id -u):$(id -g) --name ${python-ci-image-name}
+        --env INT_CHART_REPO=${env.INT_CHART_REPO}
+        --env INT_CHART_NAME=${env.INT_CHART_NAME}
+        --env FUNCTIONAL_USER_USERNAME=${env.FUNCTIONAL_USER_USERNAME}
+        --env FUNCTIONAL_USER_PASSWORD=${env.FUNCTIONAL_USER_PASSWORD}
+        -v ${env.PWD}:/ci-scripts/output-files
+        ${python-ci-image-name}:latest get-latest-helmfile-version
+
+  get-release-details-from-helmfile:
+    - task: get-release-info-helmfile-version
+      cmd: docker run --rm
+        -v ${env.PWD}:/ci-scripts/output-files
+        -v ${env.PWD}:${env.PWD}
+        --workdir ${env.PWD}
+        ${python-ci-image-name}:latest get-release-details-from-helmfile --state-values-file ${env.PWD}/${env.STATE_VALUES_FILE} --path-to-helmfile ${env.PWD}/${env.PATH_TO_HELMFILE} --get-all-images ${env.GET_ALL_IMAGES} --fetch-charts ${env.FETCH_CHARTS}
+
+  remove-helm3-installed-release:
+    - task: remove-helm3-release-chart
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /workdir/jenkins/scripts/remove_releases.sh ${env.NAMESPACE} ${kube-config-path} site_values_${env.INT_CHART_VERSION}.yaml
+    - task: remove-all-charts
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /workdir/jenkins/scripts/remove_helm_charts.sh ${env.NAMESPACE} ${kube-config-path}
+
+  annotate-namespace-installed-helmfile:
+    - task: annotate-installed-helmfile
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c "kubectl annotate --overwrite namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path} idunaas/installed-helmfile=${env.INT_CHART_VERSION}"
+
+  cleanup-helmfile-annotation:
+    - task: remove-helmfile-annotation
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c "kubectl annotate namespace ${env.NAMESPACE} --kubeconfig ${kube-config-path} idunaas/installed-helmfile-"
+
+  set-missing-application-attributes:
+    - task: set-missing-application-attributes
+      docker-image: adp-inca-helmfile-snapshot
+      cmd: ${env.PWD}/jenkins/scripts/set_unchanged_chart_attributes.sh ${env.WHAT_CHANGED} ${env.PWD}/site_values_${env.INT_CHART_VERSION}.yaml
+
+  create-store-cassandra-snapshot:
+    - task: create-store-snapshot
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: jenkins/scripts/cassandra_snapshot.sh ${env.NAMESPACE} ${kube-config-path} ${env.ENV_NAME}
+
+  uds-backend-job-wait:
+    - task: backend-job-wait
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /workdir/jenkins/scripts/UDS_backend_job_wait.sh ${env.NAMESPACE} ${kube-config-path}
+
+  uds-snapshot-restore:
+    - task: uds-cleanup
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: jenkins/scripts/uds_cleanup.sh ${kube-config-path} ${env.NAMESPACE} ${env.ENV_NAME}
+
+  uds-kafka-topics-delete:
+    - task: delete-kafka-topics
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: jenkins/scripts/delete_kafka_topic.sh ${env.NAMESPACE} ${kube-config-path} ${env.CASSANDRA_USERNAME} ${env.CASSANDRA_PASSWORD}
+
+  remove-network-policies:
+    - task: get-policies-to-remove
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: kubectl -n ${env.NAMESPACE} --kubeconfig ${kube-config-path} get networkpolicies -l='app.kubernetes.io/managed-by=Helm' | awk '{print $1}' > .bob/var.network-policies
+    - task: append-additional-hook-policies
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: kubectl -n ${env.NAMESPACE} --kubeconfig ${kube-config-path} get networkpolicies -o=jsonpath='{.items[?(@.metadata.annotations.helm\.sh/hook=="pre-upgrade")].metadata.name}' >> .bob/var.network-policies
+    - task: remove-first-line
+      cmd: sed -i '1d' .bob/var.network-policies
+    - task: remove-duplicates
+      cmd: sort -u -o .bob/var.network-policies .bob/var.network-policies
+    - task: remove-network-policies
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: /bin/bash -c 'for POLICY in $(cat .bob/var.network-policies);
+        do echo "Removing $POLICY";
+        kubectl delete -n ${env.NAMESPACE} --kubeconfig ${kube-config-path} networkpolicy $POLICY;
+        done;'
+
+  copy-optionality-file:
+    - task: copy-optionality
+      docker-image: adp-helm-install-aws
+      docker-flags:
+        - ${adp-helm-install-flags}
+      cmd: cp ${env.PATH_TO_WORKDIR}/optionality.yaml eric-eiae-helmfile/
+    - task: update-cnb-values
+      cmd: perl -pi -e 's/eric-data-document-database-pg/eric-cm-mediator-db-pg/' ${env.PWD}/eric-eiae-helmfile/values-templates/eric-cloud-native-base-site-values.yaml.gotmpl
+
+  do-health-check:
+    - task: do-health-check
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags}
+      cmd: "python3 /workdir/jenkins/scripts/health_check.py --kubeconfig ${kube-config-path} --namespace ${env.NAMESPACE} --pf_user pf-user --pf_pass ${env.IDUN_USER_PASSWORD} --url ${env.URL_VALUE} --name ${env.DEPLOYMENT_NAME}"
+    - task: check-eks-connectivity
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+      cmd: bash -c "/workdir/jenkins/scripts/eks_connectivity_check.sh ${kube-config-path}"
+
+  do-push-images-ecr:
+    - task: do-push-images-ecr
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags}
+      cmd: /bin/bash -c "export PYTHONPATH=$PYTHONPATH:/workdir/jenkins/scripts; python3 -m aws_image_manager --helm /workdir/eric-eiae-helmfile/helmfile.yaml --set /workdir/site_values_${env.INT_CHART_VERSION}.yaml --aws_repo ${env.AWS_ECR_URL} --aws_region ${env.AWS_REGION}"
+
+  do-pause-resume-grafana-alerts:
+    - task: do-pause-resume-grafana-alerts
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+        - "-e GRAFANA_CREDS_USR=${env.GRAFANA_CREDS_USR}
+           -e GRAFANA_CREDS_PSW=${env.GRAFANA_CREDS_PSW}"
+      cmd: /workdir/jenkins/scripts/pause_resume_grafana_alerts.sh ${env.DEPLOYMENT} ${env.SCRIPT_ACTION}
+
+  create-optionality-file:
+    - task: dynamically-create-optionality-yaml
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags}
+      cmd: /bin/bash /workdir/jenkins/scripts/merge_optionality.sh --csar-directory /workdir
+
+  create-eocm-subsystem-in-so:
+    - task: create-eocm-subsystem-in-so
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+        - "--volume ${env.PWD}/${env.PATH_TO_EOCM_CONFIG}:/workdir/${env.PATH_TO_EOCM_CONFIG}"
+      cmd: /bin/bash -c "export PYTHONPATH=$PYTHONPATH:/workdir/jenkins/scripts;
+            python3 /workdir/jenkins/scripts/subsystems.py  --user so-user --passw ${env.IDUN_USER_PASSWORD} --so_hostname ${env.SO_HOSTNAME} --subsystem_type ecm --config /workdir/${env.PATH_TO_EOCM_CONFIG};
+            python3 /workdir/jenkins/scripts/subsystems.py  --user so-user --passw ${env.IDUN_USER_PASSWORD} --so_hostname ${env.SO_HOSTNAME} --subsystem_type tenant"
+
+  create-enm-subsystem-in-so:
+    - task: create-enm-subsystem-in-so
+      docker-image: ci-utils
+      docker-flags:
+        - ${ci-utils-flags-no-dockerconfig}
+        - "--volume ${env.PWD}/${env.PATH_TO_ENM_CONFIG}:/workdir/${env.PATH_TO_ENM_CONFIG}"
+      cmd: /bin/bash -c "export PYTHONPATH=$PYTHONPATH:/workdir/jenkins/scripts;
+            python3 /workdir/jenkins/scripts/subsystems.py  --user so-user --passw ${env.IDUN_USER_PASSWORD} --so_hostname ${env.SO_HOSTNAME} --subsystem_type enm --config /workdir/${env.PATH_TO_ENM_CONFIG}"
+
+  upgrade-cluster:
+    - task: prepare
+      cmd: cp -pvr  ci/deployments/${env.ENV_NAME}/workdir/kube_config/config ci/deployments/${env.ENV_NAME}/workdir/config;
+           /bin/bash   ci/jenkins/scripts/eks_upgrade_params.sh  ${env.ENV_NAME} K8SVersion \'${env.EKS_VERSION}\';
+           /bin/bash   ci/jenkins/scripts/eks_upgrade_params.sh  ${env.ENV_NAME} NodeInstanceType ${env.INSTANCE_SIZE};
+           sed -i -e 's_/workdir/aws/config_/root/.aws/config_'  -e 's_/workdir/aws/credentials_/root/.aws/credentials_' ci/deployments/${env.ENV_NAME}/workdir/config;
+    - task: upgrade-cluster
+      docker-image: deployment-service
+      docker-flags:
+        - ${deployment-service-flags}
+      cmd: upgrade -y
+    - task: cleanup-cluster
+      docker-image: deployment-service
+      docker-flags:
+        - ${deployment-service-flags}
+      cmd: cleanup -y
+    - task: rollback-cluster
+      docker-image: deployment-service
+      docker-flags:
+        - ${deployment-service-flags}
+      cmd: rollback -y
+  
+  get-from-minio:
+    - task: get-keys-certificates
+      docker-image: minio-client
+      docker-flags:
+        - ${minio-client-flags}
+      cmd: --config-dir /workdir cp --recursive minio/eiap/${env.DEPLOYMENT_NAME} .
+    - task: copy-keys-certificates
+      cmd: rm -rf ../cache/${env.DEPLOYMENT_NAME};
+           cp -a ${env.DEPLOYMENT_NAME} ../cache/
+
+  get-from-minio-eo:
+    - task: get-keys-certificates
+      docker-image: minio-client
+      docker-flags:
+        - ${minio-client-flags}
+      cmd: --config-dir /workdir cp --recursive minio/eo-deploy/${env.DEPLOYMENT_NAME} .
+    - task: copy-keys-certificates-and-site-values
+      cmd: rm -rf ../cache/${env.DEPLOYMENT_NAME};
+           cp -a ${env.DEPLOYMENT_NAME} ../cache/

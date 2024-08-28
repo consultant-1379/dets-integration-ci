@@ -1,0 +1,10 @@
+global:
+  bdr:
+    enabled: true
+  hosts:
+    bdr: 'BDR_HOST_REPLACE'
+
+eric-cloud-native-base:
+  eric-data-object-storage-mn:
+    openID:
+      enabled: true

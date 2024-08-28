@@ -1,0 +1,15 @@
+eric-cncs-oss-config:
+  sef:
+    enabled: true
+eric-service-exposure-framework:
+  eric-sef-exposure-api-gateway:
+    serviceMesh:
+      ingress:
+        hosts:
+          - EIC_HOST_REPLACE
+global:
+  eic:
+    enabled: true
+  hosts:
+    eic: EIC_HOST_REPLACE
+    iam: EIC_HOST_REPLACE
